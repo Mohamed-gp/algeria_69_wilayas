@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algeria 69 Wilayas - Interactive Map</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #006633 0%, #ffffff 50%, #D52B1E 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #006633, #009944);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f5f5f5;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: #006633;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #006633;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .wilaya-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .wilaya-card {
+            background: white;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .wilaya-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border-color: #006633;
+        }
+        
+        .wilaya-card.new-2025 {
+            border-color: #D52B1E;
+            background: #fff9f9;
+        }
+        
+        .wilaya-card h3 {
+            color: #006633;
+            margin-bottom: 5px;
+            font-size: 1.3em;
+        }
+        
+        .wilaya-card .arabic {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            direction: rtl;
+        }
+        
+        .wilaya-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
+        .wilaya-info div {
+            padding: 5px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .badge.north { background: #e3f2fd; color: #1976d2; }
+        .badge.high-plateaus { background: #fff3e0; color: #f57c00; }
+        .badge.sahara { background: #fce4ec; color: #c2185b; }
+        .badge.new { background: #ffebee; color: #c62828; }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 1.2em;
+        }
+        
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+        
+        .features {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .features ul {
+            list-style: none;
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .features li {
+            padding: 3px 0;
+        }
+        
+        .features li:before {
+            content: "🌟 ";
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇩🇿 Algeria 69 Wilayas</h1>
+            <p>الولايات التسعة والستون للجزائر</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Complete Dataset with 2025 Updates</p>
+        </header>
+        
+        <div class="stats" id="stats"></div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="regionFilter">Filter by Region</label>
+                <select id="regionFilter">
+                    <option value="all">All Regions</option>
+                    <option value="North">North/Tell</option>
+                    <option value="High Plateaus">High Plateaus</option>
+                    <option value="Sahara">Sahara</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="yearFilter">Filter by Establishment</label>
+                <select id="yearFilter">
+                    <option value="all">All Years</option>
+                    <option value="1984">1984 (Original 48)</option>
+                    <option value="2019">2019 (10 new)</option>
+                    <option value="2025">2025 (11 newest)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="searchInput">Search</label>
+                <input type="text" id="searchInput" placeholder="Search by name...">
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="wilaya-grid" id="wilayaGrid"></div>
+            <div class="no-results" id="noResults" style="display: none;">
+                No wilayas found matching your criteria.
+            </div>
+        </div>
+        
+        <footer>
+            <p>Data from <strong>algeria_69_wilayas</strong> repository</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
+                Last updated: November 2025 | Version 1.1.0
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        let wilayasData = null;
+
+        // Load data
+        fetch('main.json')
+            .then(response => response.json())
+            .then(data => {
+                wilayasData = data;
+                updateStats();
+                displayWilayas(data.wilayas);
+                setupFilters();
+            })
+            .catch(error => {
+                console.error('Error loading data:', error);
+                document.getElementById('wilayaGrid').innerHTML = 
+                    '<p class="no-results">Error loading data. Please check console.</p>';
+            });
+
+        function updateStats() {
+            const stats = document.getElementById('stats');
+            const new2025Count = wilayasData.wilayas.filter(w => w.new_2025).length;
+            const totalPopulation = wilayasData.wilayas
+                .reduce((sum, w) => sum + (w.population_approx || 0), 0);
+            const avgElevation = Math.round(
+                wilayasData.wilayas.reduce((sum, w) => sum + w.elevation, 0) / 69
+            );
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="number">69</div>
+                    <div class="label">Total Wilayas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${new2025Count}</div>
+                    <div class="label">New in 2025</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${(totalPopulation / 1000000).toFixed(1)}M</div>
+                    <div class="label">Total Population</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${avgElevation}m</div>
+                    <div class="label">Avg Elevation</div>
+                </div>
+            `;
+        }
+
+        function displayWilayas(wilayas) {
+            const grid = document.getElementById('wilayaGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (wilayas.length === 0) {
+                grid.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+            
+            grid.style.display = 'grid';
+            noResults.style.display = 'none';
+            
+            grid.innerHTML = wilayas.map(wilaya => {
+                const regionClass = wilaya.region ? 
+                    wilaya.region.toLowerCase().replace(/ /g, '-') : '';
+                
+                return `
+                    <div class="wilaya-card ${wilaya.new_2025 ? 'new-2025' : ''}">
+                        <h3>${wilaya.id}. ${wilaya.name}</h3>
+                        <div class="arabic">${wilaya.name_ar}</div>
+                        
+                        <div class="wilaya-info">
+                            <div><strong>Region:</strong> ${wilaya.region || 'N/A'}</div>
+                            <div><strong>Est:</strong> ${wilaya.established}</div>
+                            <div><strong>Elevation:</strong> ${wilaya.elevation}m</div>
+                            <div><strong>Pop:</strong> ${wilaya.population_approx ? 
+                                (wilaya.population_approx / 1000).toFixed(0) + 'K' : 'N/A'}</div>
+                            <div><strong>Lat:</strong> ${wilaya.latitude.toFixed(4)}</div>
+                            <div><strong>Lon:</strong> ${wilaya.longitude.toFixed(4)}</div>
+                        </div>
+                        
+                        ${wilaya.region ? `<span class="badge ${regionClass}">${wilaya.region}</span>` : ''}
+                        ${wilaya.new_2025 ? '<span class="badge new">NEW 2025</span>' : ''}
+                        ${wilaya.capital ? '<span class="badge">CAPITAL</span>' : ''}
+                        ${wilaya.coastal ? '<span class="badge">COASTAL</span>' : ''}
+                        
+                        ${wilaya.notable_features ? `
+                            <div class="features">
+                                <ul>
+                                    ${wilaya.notable_features.slice(0, 3).map(f => 
+                                        `<li>${f}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupFilters() {
+            const regionFilter = document.getElementById('regionFilter');
+            const yearFilter = document.getElementById('yearFilter');
+            const searchInput = document.getElementById('searchInput');
+
+            function applyFilters() {
+                let filtered = wilayasData.wilayas;
+
+                // Region filter
+                if (regionFilter.value !== 'all') {
+                    filtered = filtered.filter(w => w.region === regionFilter.value);
+                }
+
+                // Year filter
+                if (yearFilter.value !== 'all') {
+                    filtered = filtered.filter(w => w.established === yearFilter.value);
+                }
+
+                // Search filter
+                const searchTerm = searchInput.value.toLowerCase();
+                if (searchTerm) {
+                    filtered = filtered.filter(w => 
+                        w.name.toLowerCase().includes(searchTerm) ||
+                        w.name_ar.includes(searchTerm) ||
+                        w.id.toString() === searchTerm
+                    );
+                }
+
+                displayWilayas(filtered);
+            }
+
+            regionFilter.addEventListener('change', applyFilters);
+            yearFilter.addEventListener('change', applyFilters);
+            searchInput.addEventListener('input', applyFilters);
+        }
+    </script>
+</body>
+</html>
