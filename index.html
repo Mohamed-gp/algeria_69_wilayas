@@ -293,6 +293,73 @@
         .commune-match {
             background: #fffde7;
         }
+
+        .picker {
+            margin: 0 20px 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9f4, #e8f5ee);
+            border: 2px solid #006633;
+            border-radius: 10px;
+        }
+
+        .picker h2 {
+            color: #006633;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .picker .hint {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .picker-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .picker-row .control-group {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .picker select:disabled {
+            background: #eee;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .picker-result {
+            display: none;
+            margin-top: 15px;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #006633;
+            font-size: 0.95em;
+        }
+
+        .picker-result.show {
+            display: block;
+        }
+
+        .picker-result .ar {
+            direction: rtl;
+            color: #444;
+        }
+
+        .picker-result code {
+            display: block;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            font-size: 0.85em;
+            overflow-x: auto;
+            white-space: pre;
+        }
     </style>
 </head>
 <body>
@@ -304,7 +371,27 @@
         </header>
         
         <div class="stats" id="stats"></div>
-        
+
+        <div class="picker">
+            <h2>🛒 Wilaya → Commune Picker</h2>
+            <p class="hint">The classic checkout-form use case: pick a wilaya and get its communes. Built from <code style="display:inline;margin:0;padding:2px 5px;">main.json</code> + <code style="display:inline;margin:0;padding:2px 5px;">communes.json</code>.</p>
+            <div class="picker-row">
+                <div class="control-group">
+                    <label for="wilayaSelect">Wilaya / الولاية</label>
+                    <select id="wilayaSelect">
+                        <option value="">— Select a wilaya —</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="communeSelect">Commune / البلدية</label>
+                    <select id="communeSelect" disabled>
+                        <option value="">— Select a wilaya first —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="picker-result" id="pickerResult"></div>
+        </div>
+
         <div class="controls">
             <div class="control-group">
                 <label for="regionFilter">Filter by Region</label>
@@ -374,6 +461,7 @@
                 updateStats();
                 displayWilayas(data.wilayas);
                 setupFilters();
+                setupPicker();
             })
             .catch(error => {
                 console.error('Error loading data:', error);
@@ -495,6 +583,59 @@
             return commune.name.toLowerCase().includes(searchTerm) ||
                 commune.name_ar.includes(searchTerm) ||
                 commune.daira.toLowerCase().includes(searchTerm);
+        }
+
+        function setupPicker() {
+            const wilayaSelect = document.getElementById('wilayaSelect');
+            const communeSelect = document.getElementById('communeSelect');
+            const result = document.getElementById('pickerResult');
+
+            for (const wilaya of wilayasData.wilayas) {
+                const option = document.createElement('option');
+                option.value = wilaya.id;
+                option.textContent = `${wilaya.id} - ${wilaya.name} (${wilaya.name_ar})`;
+                wilayaSelect.appendChild(option);
+            }
+
+            wilayaSelect.addEventListener('change', () => {
+                result.classList.remove('show');
+                communeSelect.innerHTML = '';
+
+                if (!wilayaSelect.value) {
+                    communeSelect.disabled = true;
+                    communeSelect.innerHTML = '<option value="">— Select a wilaya first —</option>';
+                    return;
+                }
+
+                const communes = communesByWilaya[wilayaSelect.value] || [];
+                communeSelect.disabled = false;
+                communeSelect.innerHTML =
+                    `<option value="">— ${communes.length} communes —</option>`;
+                for (const commune of communes) {
+                    const option = document.createElement('option');
+                    option.value = commune.id;
+                    option.textContent = `${commune.name} (${commune.name_ar})`;
+                    communeSelect.appendChild(option);
+                }
+            });
+
+            communeSelect.addEventListener('change', () => {
+                if (!communeSelect.value) {
+                    result.classList.remove('show');
+                    return;
+                }
+                const communes = communesByWilaya[wilayaSelect.value] || [];
+                const commune = communes.find(c => c.id === Number(communeSelect.value));
+                const wilaya = wilayasData.wilayas.find(w => w.id === Number(wilayaSelect.value));
+                if (!commune || !wilaya) return;
+
+                result.innerHTML = `
+                    📍 <strong>${commune.name}</strong>, daira of ${commune.daira}, wilaya of
+                    ${wilaya.name} — <span class="ar">${commune.name_ar}، دائرة ${commune.daira_ar}، ولاية ${wilaya.name_ar}</span>
+                    <code>${JSON.stringify(commune)}</code>
+                `;
+                result.classList.add('show');
+            });
         }
 
         function setupFilters() {
