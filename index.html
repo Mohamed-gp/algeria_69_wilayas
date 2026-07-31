@@ -3,7 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Algeria 69 Wilayas - Interactive Map</title>
+    <title>Algeria 69 Wilayas &amp; 1,541 Communes - Free JSON Dataset with Official Numbering</title>
+    <meta name="description" content="Free open-source JSON dataset of all 69 Algerian wilayas and 1,541 communes with official numbering (Loi 26-06), Arabic names, coordinates and dairas. ولايات وبلديات الجزائر">
+    <link rel="canonical" href="https://mohamed-gp.github.io/algeria_69_wilayas/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Algeria 69 Wilayas &amp; 1,541 Communes - Free JSON Dataset">
+    <meta property="og:description" content="All 69 Algerian wilayas and 1,541 communes with official numbering, Arabic names, coordinates and dairas. MIT licensed, ready for e-commerce and delivery apps.">
+    <meta property="og:url" content="https://mohamed-gp.github.io/algeria_69_wilayas/">
+    <meta name="twitter:card" content="summary">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "Algeria 69 Wilayas & 1,541 Communes",
+      "description": "Complete dataset of Algeria's 69 wilayas (provinces) and 1,541 communes (municipalities) with official numbering per Loi 19-12 and Loi 26-06, including English and Arabic names, coordinates, regions and dairas.",
+      "url": "https://github.com/Mohamed-gp/algeria_69_wilayas",
+      "license": "https://opensource.org/licenses/MIT",
+      "creator": {"@type": "Person", "name": "Mohamed Outerbah"},
+      "keywords": ["Algeria", "wilayas", "communes", "provinces", "municipalities", "dataset", "JSON", "الجزائر", "ولايات", "بلديات"],
+      "spatialCoverage": "Algeria",
+      "distribution": [
+        {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://mohamed-gp.github.io/algeria_69_wilayas/main.json"},
+        {"@type": "DataDownload", "encodingFormat": "application/json", "contentUrl": "https://mohamed-gp.github.io/algeria_69_wilayas/communes.json"}
+      ]
+    }
+    </script>
     <style>
         * {
             margin: 0;
@@ -212,14 +236,71 @@
         .features li:before {
             content: "🌟 ";
         }
+
+        .commune-toggle {
+            width: 100%;
+            margin-top: 12px;
+            padding: 8px;
+            border: 1px solid #006633;
+            border-radius: 5px;
+            background: white;
+            color: #006633;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .commune-toggle:hover {
+            background: #006633;
+            color: white;
+        }
+
+        .commune-list {
+            display: none;
+            margin-top: 10px;
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+
+        .commune-list.open {
+            display: block;
+        }
+
+        .commune-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            font-size: 0.85em;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .commune-item:last-child {
+            border-bottom: none;
+        }
+
+        .commune-item .ar {
+            direction: rtl;
+            color: #666;
+        }
+
+        .commune-item .daira {
+            color: #999;
+            font-size: 0.9em;
+        }
+
+        .commune-match {
+            background: #fffde7;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🇩🇿 Algeria 69 Wilayas</h1>
-            <p>الولايات التسعة والستون للجزائر</p>
-            <p style="font-size: 0.9em; margin-top: 10px;">Complete Dataset with 2025 Updates</p>
+            <h1>🇩🇿 Algeria 69 Wilayas &amp; 1,541 Communes</h1>
+            <p>الولايات التسعة والستون وبلديات الجزائر</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Complete Dataset with Official 2025 Numbering</p>
         </header>
         
         <div class="stats" id="stats"></div>
@@ -247,7 +328,7 @@
             
             <div class="control-group">
                 <label for="searchInput">Search</label>
-                <input type="text" id="searchInput" placeholder="Search by name...">
+                <input type="text" id="searchInput" placeholder="Search wilaya or commune...">
             </div>
         </div>
         
@@ -259,34 +340,52 @@
         </div>
         
         <footer>
-            <p>Data from <strong>algeria_69_wilayas</strong> repository</p>
+            <p>
+                Free &amp; open source:
+                <a href="https://github.com/Mohamed-gp/algeria_69_wilayas" style="color: #7fd4a8; font-weight: bold;">
+                    ⭐ Star algeria_69_wilayas on GitHub
+                </a>
+            </p>
+            <p style="margin-top: 8px; font-size: 0.9em;">
+                Download:
+                <a href="main.json" style="color: #7fd4a8;">main.json</a> (wilayas) ·
+                <a href="communes.json" style="color: #7fd4a8;">communes.json</a> (communes)
+            </p>
             <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.8;">
-                Last updated: November 2025 | Version 1.1.0
+                Last updated: July 2026 | Version 2.0.0
             </p>
         </footer>
     </div>
 
     <script>
         let wilayasData = null;
+        let communesByWilaya = {};
 
         // Load data
-        fetch('main.json')
-            .then(response => response.json())
-            .then(data => {
+        Promise.all([
+            fetch('main.json').then(response => response.json()),
+            fetch('communes.json').then(response => response.json())
+        ])
+            .then(([data, communesData]) => {
                 wilayasData = data;
+                for (const commune of communesData.communes) {
+                    (communesByWilaya[commune.wilaya_id] ||= []).push(commune);
+                }
                 updateStats();
                 displayWilayas(data.wilayas);
                 setupFilters();
             })
             .catch(error => {
                 console.error('Error loading data:', error);
-                document.getElementById('wilayaGrid').innerHTML = 
+                document.getElementById('wilayaGrid').innerHTML =
                     '<p class="no-results">Error loading data. Please check console.</p>';
             });
 
         function updateStats() {
             const stats = document.getElementById('stats');
             const new2025Count = wilayasData.wilayas.filter(w => w.new_2025).length;
+            const totalCommunes = wilayasData.total_communes ||
+                Object.values(communesByWilaya).reduce((sum, list) => sum + list.length, 0);
             const totalPopulation = wilayasData.wilayas
                 .reduce((sum, w) => sum + (w.population_approx || 0), 0);
             const avgElevation = Math.round(
@@ -297,6 +396,10 @@
                 <div class="stat-card">
                     <div class="number">69</div>
                     <div class="label">Total Wilayas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${totalCommunes.toLocaleString()}</div>
+                    <div class="label">Communes</div>
                 </div>
                 <div class="stat-card">
                     <div class="number">${new2025Count}</div>
@@ -326,42 +429,72 @@
             grid.style.display = 'grid';
             noResults.style.display = 'none';
             
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
             grid.innerHTML = wilayas.map(wilaya => {
-                const regionClass = wilaya.region ? 
+                const regionClass = wilaya.region ?
                     wilaya.region.toLowerCase().replace(/ /g, '-') : '';
-                
+                const communes = communesByWilaya[wilaya.id] || [];
+
                 return `
                     <div class="wilaya-card ${wilaya.new_2025 ? 'new-2025' : ''}">
                         <h3>${wilaya.id}. ${wilaya.name}</h3>
                         <div class="arabic">${wilaya.name_ar}</div>
-                        
+
                         <div class="wilaya-info">
                             <div><strong>Region:</strong> ${wilaya.region || 'N/A'}</div>
                             <div><strong>Est:</strong> ${wilaya.established}</div>
                             <div><strong>Elevation:</strong> ${wilaya.elevation}m</div>
-                            <div><strong>Pop:</strong> ${wilaya.population_approx ? 
+                            <div><strong>Pop:</strong> ${wilaya.population_approx ?
                                 (wilaya.population_approx / 1000).toFixed(0) + 'K' : 'N/A'}</div>
                             <div><strong>Lat:</strong> ${wilaya.latitude.toFixed(4)}</div>
                             <div><strong>Lon:</strong> ${wilaya.longitude.toFixed(4)}</div>
                         </div>
-                        
+
                         ${wilaya.region ? `<span class="badge ${regionClass}">${wilaya.region}</span>` : ''}
                         ${wilaya.new_2025 ? '<span class="badge new">NEW 2025</span>' : ''}
                         ${wilaya.capital ? '<span class="badge">CAPITAL</span>' : ''}
                         ${wilaya.coastal ? '<span class="badge">COASTAL</span>' : ''}
-                        
+
                         ${wilaya.notable_features ? `
                             <div class="features">
                                 <ul>
-                                    ${wilaya.notable_features.slice(0, 3).map(f => 
+                                    ${wilaya.notable_features.slice(0, 3).map(f =>
                                         `<li>${f}</li>`
                                     ).join('')}
                                 </ul>
                             </div>
                         ` : ''}
+
+                        ${communes.length ? `
+                            <button class="commune-toggle" onclick="toggleCommunes(this)">
+                                🏘️ ${communes.length} Communes
+                            </button>
+                            <div class="commune-list">
+                                ${communes.map(commune => `
+                                    <div class="commune-item ${searchTerm && communeMatches(commune, searchTerm) ? 'commune-match' : ''}">
+                                        <span>${commune.name}
+                                            ${commune.daira !== commune.name ?
+                                                `<span class="daira">(${commune.daira})</span>` : ''}
+                                        </span>
+                                        <span class="ar">${commune.name_ar}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
+        }
+
+        function toggleCommunes(button) {
+            button.nextElementSibling.classList.toggle('open');
+        }
+
+        function communeMatches(commune, searchTerm) {
+            return commune.name.toLowerCase().includes(searchTerm) ||
+                commune.name_ar.includes(searchTerm) ||
+                commune.daira.toLowerCase().includes(searchTerm);
         }
 
         function setupFilters() {
@@ -382,13 +515,14 @@
                     filtered = filtered.filter(w => w.established === yearFilter.value);
                 }
 
-                // Search filter
+                // Search filter (matches wilaya names and commune names)
                 const searchTerm = searchInput.value.toLowerCase();
                 if (searchTerm) {
-                    filtered = filtered.filter(w => 
+                    filtered = filtered.filter(w =>
                         w.name.toLowerCase().includes(searchTerm) ||
                         w.name_ar.includes(searchTerm) ||
-                        w.id.toString() === searchTerm
+                        w.id.toString() === searchTerm ||
+                        (communesByWilaya[w.id] || []).some(c => communeMatches(c, searchTerm))
                     );
                 }
 
